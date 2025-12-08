@@ -22,6 +22,7 @@
   import { fade } from 'svelte/transition';
 
   interface Props {
+    transitionName?: string;
     cursor: AssetCursor;
     assetId?: string;
     sharedLink?: SharedLinkResponseDto;
@@ -32,9 +33,11 @@
     onVideoEnded?: () => void;
     onVideoStarted?: () => void;
     onClose?: () => void;
+    onReady?: () => void;
   }
 
   let {
+    transitionName,
     cursor,
     assetId,
     sharedLink,
@@ -45,6 +48,7 @@
     onVideoEnded = () => {},
     onVideoStarted = () => {},
     onClose = () => {},
+    onReady,
   }: Props = $props();
 
   const asset = $derived(cursor.current);
@@ -104,6 +108,7 @@
       width: videoPlayer?.videoWidth ?? 1,
       height: videoPlayer?.videoHeight ?? 1,
     };
+    onReady?.();
   };
 
   const handleCanPlay = async (video: HTMLVideoElement) => {
@@ -180,6 +185,7 @@
       {:else}
         <div class="relative">
           <video
+            style:view-transition-name={transitionName}
             style:height={box.height}
             style:width={box.width}
             bind:this={videoPlayer}

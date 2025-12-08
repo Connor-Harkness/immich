@@ -13,7 +13,7 @@
   import { t } from 'svelte-i18n';
 
   interface Props {
-    htmlElement: HTMLImageElement | HTMLVideoElement;
+    htmlElement: HTMLImageElement | HTMLVideoElement | undefined | null;
     containerWidth: number;
     containerHeight: number;
     assetId: string;
@@ -82,6 +82,9 @@
   });
 
   $effect(() => {
+    if (!htmlElement) {
+      return;
+    }
     const metrics = getContentMetrics(htmlElement);
 
     const imageBoundingBox = {

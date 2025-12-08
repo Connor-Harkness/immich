@@ -11,6 +11,8 @@
   import HotModuleReload from '$lib/elements/HotModuleReload.svelte';
   import Portal from '$lib/elements/Portal.svelte';
   import Skeleton from '$lib/elements/Skeleton.svelte';
+  import { viewTransitionManager } from '$lib/managers/ViewTransitionManager.svelte';
+  import { eventManager } from '$lib/managers/event-manager.svelte';
   import type { DayGroup } from '$lib/managers/timeline-manager/day-group.svelte';
   import { isIntersecting } from '$lib/managers/timeline-manager/internal/intersection-support.svelte';
   import type { MonthGroup } from '$lib/managers/timeline-manager/month-group.svelte';
@@ -26,7 +28,6 @@
   import { DateTime } from 'luxon';
   import { onDestroy, onMount, tick, type Snippet } from 'svelte';
   import type { UpdatePayload } from 'vite';
-
   interface Props {
     isSelectionMode?: boolean;
     singleSelect?: boolean;
@@ -102,6 +103,7 @@
   // Overall scroll percentage through the entire timeline (0-1)
   let timelineScrollPercent: number = $state(0);
   let scrubberWidth = $state(0);
+  let toAssetViewerTransitionId = $state<string | null>(null);
 
   const isEmpty = $derived(timelineManager.isInitialized && timelineManager.months.length === 0);
   const maxMd = $derived(mediaQueryManager.maxMd);
@@ -209,7 +211,7 @@
         timelineManager.viewportWidth = rect.width;
       }
     }
-    const scrollTarget = $gridScrollTarget?.at;
+    const scrollTarget = getScrollTarget();
     let scrolled = false;
     if (scrollTarget) {
       scrolled = await scrollAndLoadAsset(scrollTarget);
@@ -221,7 +223,7 @@
       await tick();
       focusAsset(scrollTarget);
     }
-    invisible = false;
+    invisible = isAssetViewerRoute(page) ? true : false;
   };
 
   // note: only modified once in afterNavigate()
@@ -239,10 +241,13 @@
     hasNavigatedToOrFromAssetViewer = isNavigatingToAssetViewer !== isNavigatingFromAssetViewer;
   });
 
+  const getScrollTarget = () => {
+    return $gridScrollTarget?.at ?? page.params.assetId ?? null;
+  };
   // afterNavigate is only called after navigation to a new URL, {complete} will resolve
   // after successful navigation.
   afterNavigate(({ complete }) => {
-    void complete.finally(() => {
+    void complete.finally(async () => {
       const isAssetViewerPage = isAssetViewerRoute(page);
 
       // Set initial load state only once - if initialLoadWasAssetViewer is null, then
@@ -251,8 +256,13 @@
       if (isDirectNavigation) {
         initialLoadWasAssetViewer = isAssetViewerPage && !hasNavigatedToOrFromAssetViewer;
       }
-
       void scrollAfterNavigate();
+      if (!isAssetViewerPage) {
+        const scrollTarget = getScrollTarget();
+        await tick();
+
+        eventManager.emit('TimelineLoaded', { id: scrollTarget });
+      }
     });
   });
 
@@ -260,7 +270,7 @@
   // note: don't throttle, debounch, or otherwise do this function async - it causes flicker
 
   onMount(() => {
-    if (!enableRouting) {
+    if (!enableRouting && !isAssetViewerRoute(page)) {
       invisible = false;
     }
   });
@@ -544,19 +554,6 @@
 
     assetInteraction.selectAll = timelineManager.assetCount === assetInteraction.selectedAssets.length;
   };
-
-  const _onClick = (
-    timelineManager: TimelineManager,
-    assets: TimelineAsset[],
-    groupTitle: string,
-    asset: TimelineAsset,
-  ) => {
-    if (isSelectionMode || assetInteraction.selectionActive) {
-      assetSelectHandler(timelineManager, asset, assets, groupTitle);
-      return;
-    }
-    void navigate({ targetRoute: 'current', assetId: asset.id });
-  };
 </script>
 
 <svelte:document onkeydown={onKeyDown} onkeyup={onKeyUp} />
@@ -587,6 +584,7 @@
 {#if timelineManager.months.length > 0}
   <Scrubber
     {timelineManager}
+    {invisible}
     height={timelineManager.viewportHeight}
     timelineTopOffset={timelineManager.topSectionHeight}
     timelineBottomOffset={timelineManager.bottomSectionHeight}
@@ -666,11 +664,11 @@
           style:width="100%"
         >
           <Month
+            {toAssetViewerTransitionId}
             {assetInteraction}
             {customThumbnailLayout}
             {singleSelect}
             {monthGroup}
-            manager={timelineManager}
             onDayGroupSelect={handleGroupSelect}
           >
             {#snippet thumbnail({ asset, position, dayGroup, groupIndex })}
@@ -684,12 +682,56 @@
                 {asset}
                 {albumUsers}
                 {groupIndex}
-                onClick={(asset) => {
-                  if (typeof onThumbnailClick === 'function') {
-                    onThumbnailClick(asset, timelineManager, dayGroup, _onClick);
-                  } else {
-                    _onClick(timelineManager, dayGroup.getAssets(), dayGroup.groupTitle, asset);
+                onClick={async (asset) => {
+                  const onClick = (
+                    timelineManager: TimelineManager,
+                    assets: TimelineAsset[],
+                    groupTitle: string,
+                    asset: TimelineAsset,
+                  ) => {
+                    if (isSelectionMode || assetInteraction.selectionActive) {
+                      assetSelectHandler(timelineManager, asset, assets, groupTitle);
+                      return;
+                    }
+                    void navigate({ targetRoute: 'current', assetId: asset.id });
+                  };
+
+                  const dispatchClick = () => {
+                    if (typeof onThumbnailClick === 'function') {
+                      onThumbnailClick(asset, timelineManager, dayGroup, onClick);
+                    } else {
+                      onClick(timelineManager, dayGroup.getAssets(), dayGroup.groupTitle, asset);
+                    }
+                  };
+
+                  const hasThumbnailClick = typeof onThumbnailClick === 'function';
+                  const selectingAssets = isSelectionMode || assetInteraction.selectionActive;
+
+                  if (!viewTransitionManager.isSupported() || hasThumbnailClick || selectingAssets) {
+                    dispatchClick();
+                    return;
                   }
+
+                  // tag  target on the 'old' snapshot
+                  toAssetViewerTransitionId = asset.id;
+                  await tick();
+
+                  eventManager.once('StartViewTransition', () => {
+                    toAssetViewerTransitionId = null;
+                    dispatchClick();
+                  });
+
+                  viewTransitionManager.startTransition(
+                    new Promise<void>((resolve) => {
+                      eventManager.once('AssetViewerFree', () => {
+                        void tick().then(() => {
+                          eventManager.emit('TransitionToAssetViewer');
+                          resolve();
+                        });
+                      });
+                    }),
+                    ['viewer'],
+                  );
                 }}
                 onSelect={() => {
                   if (isSelectionMode || assetInteraction.selectionActive) {
