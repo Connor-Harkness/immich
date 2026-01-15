@@ -19,7 +19,7 @@
 
 <div class="absolute left-0 top-0">
   <div
-    class="absolute flex items-center justify-center text-transparent text-sm border-2 border-blue-500 bg-blue-500/10 px-2 py-1 pointer-events-auto cursor-text whitespace-pre-wrap wrap-break-word select-text transition-all hover:text-white hover:bg-black/60 hover:border-blue-600 hover:border-3"
+    class="absolute flex items-center justify-center text-transparent text-sm border-2 border-blue-500 bg-blue-500/10 px-2 py-1 pointer-events-auto cursor-text whitespace-pre-wrap wrap-break-word select-text transition-colors hover:text-white hover:bg-black/60 hover:border-blue-600 hover:border-3"
     style="font-size: {fontSize}; width: {dimensions.width}px; height: {dimensions.height}px; transform: {transform}; transform-origin: 0 0;"
   >
     {ocrBox.text}
