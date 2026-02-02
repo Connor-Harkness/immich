@@ -672,6 +672,7 @@
 
   {#if $slideshowState === SlideshowState.None && showNavigation && !assetViewerManager.isShowEditor && !isFaceEditMode.value && previousAsset}
     <div
+      data-test-id="previous-asset"
       class="my-auto col-span-1 col-start-1 row-span-full row-start-1 justify-self-start"
       style:view-transition-name="exclude-leftbutton"
     >
@@ -760,6 +761,7 @@
 
   {#if $slideshowState === SlideshowState.None && showNavigation && !assetViewerManager.isShowEditor && !isFaceEditMode.value && nextAsset}
     <div
+      data-test-id="next-asset"
       class="my-auto col-span-1 col-start-4 row-span-full row-start-1 justify-self-end"
       style:view-transition-name="exclude-rightbutton"
     >
