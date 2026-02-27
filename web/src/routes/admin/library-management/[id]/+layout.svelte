@@ -30,7 +30,7 @@
   const { children, data }: Props = $props();
 
   const statistics = data.statistics;
-  const [storageUsage, unit] = getBytesWithUnit(statistics.usage);
+  const [storageUsage, unit] = getBytesWithUnit(statistics.usage!);
 
   let library = $state(data.library);
 
@@ -61,8 +61,8 @@
     <div class="grid gap-4 grid-cols-1 lg:grid-cols-2 w-full">
       <Heading tag="h1" size="large" class="col-span-full my-4">{library.name}</Heading>
       <div class="flex flex-col lg:flex-row gap-4 col-span-full">
-        <ServerStatisticsCard icon={mdiCameraIris} title={$t('photos')} value={statistics.photos} />
-        <ServerStatisticsCard icon={mdiPlayCircle} title={$t('videos')} value={statistics.videos} />
+        <ServerStatisticsCard icon={mdiCameraIris} title={$t('photos')} value={statistics.photos!} />
+        <ServerStatisticsCard icon={mdiPlayCircle} title={$t('videos')} value={statistics.videos!} />
         <ServerStatisticsCard icon={mdiChartPie} title={$t('usage')} value={storageUsage} {unit} />
       </div>
 

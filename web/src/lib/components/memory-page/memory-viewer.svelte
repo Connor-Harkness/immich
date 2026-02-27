@@ -107,7 +107,7 @@
       });
     } else {
       progressBarController = new Tween<number>(0, {
-        duration: (from: number, to: number) => (to ? $preferences.memories.duration * 1000 * (to - from) : 0),
+        duration: (from: number, to: number) => (to ? $preferences.memories.duration! * 1000 * (to - from) : 0),
       });
     }
   };

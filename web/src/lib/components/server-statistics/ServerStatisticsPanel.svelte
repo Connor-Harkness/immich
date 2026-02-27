@@ -32,7 +32,7 @@
   };
 
   const TiB = 1024 ** 4;
-  let [statsUsage, statsUsageUnit] = $derived(getBytesWithUnit(stats.usage, stats.usage > TiB ? 2 : 0));
+  let [statsUsage, statsUsageUnit] = $derived(getBytesWithUnit(stats.usage!, stats.usage! > TiB ? 2 : 0));
 </script>
 
 <div class="flex flex-col gap-5 my-4">
@@ -40,8 +40,8 @@
     <Text class="mb-2" fontWeight="medium">{$t('total_usage')}</Text>
 
     <div class="hidden justify-between lg:flex gap-4">
-      <StatsCard icon={mdiCameraIris} title={$t('photos')} value={stats.photos} />
-      <StatsCard icon={mdiPlayCircle} title={$t('videos')} value={stats.videos} />
+      <StatsCard icon={mdiCameraIris} title={$t('photos')} value={stats.photos!} />
+      <StatsCard icon={mdiPlayCircle} title={$t('videos')} value={stats.videos!} />
       <StatsCard icon={mdiChartPie} title={$t('storage')} value={statsUsage} unit={statsUsageUnit} />
     </div>
 
@@ -54,7 +54,7 @@
           </div>
 
           <div class="relative text-center font-mono text-2xl font-medium">
-            <span class="text-light-300">{zeros(stats.photos)}</span><span class="text-primary">{stats.photos}</span>
+            <span class="text-light-300">{zeros(stats.photos!)}</span><span class="text-primary">{stats.photos}</span>
           </div>
         </div>
         <div class="flex flex-wrap gap-x-12">
@@ -64,7 +64,7 @@
           </div>
 
           <div class="relative text-center font-mono text-2xl font-medium">
-            <span class="text-light-300">{zeros(stats.videos)}</span><span class="text-primary">{stats.videos}</span>
+            <span class="text-light-300">{zeros(stats.videos!)}</span><span class="text-primary">{stats.videos}</span>
           </div>
         </div>
         <div class="flex flex-wrap gap-x-5">

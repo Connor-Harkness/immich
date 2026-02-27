@@ -95,7 +95,7 @@
           <TableBody>
             {#each libraries as library (library.id + library.name)}
               {@const { photos, usage, videos } = statistics[library.id]}
-              {@const [diskUsage, diskUsageUnit] = getBytesWithUnit(usage, 0)}
+              {@const [diskUsage, diskUsageUnit] = getBytesWithUnit(usage!, 0)}
               {@const owner = owners[library.id]}
               <TableRow>
                 <TableCell class={classes.column1}>
@@ -104,8 +104,8 @@
                 <TableCell class={classes.column2}>
                   <Link href={Route.viewUser(owner)}>{owner.name}</Link>
                 </TableCell>
-                <TableCell class={classes.column3}>{photos.toLocaleString($locale)}</TableCell>
-                <TableCell class={classes.column4}>{videos.toLocaleString($locale)}</TableCell>
+                <TableCell class={classes.column3}>{photos!.toLocaleString($locale)}</TableCell>
+                <TableCell class={classes.column4}>{videos!.toLocaleString($locale)}</TableCell>
                 <TableCell class={classes.column5}>{diskUsage} {diskUsageUnit}</TableCell>
                 <TableCell class={classes.column6}>
                   <ContextMenuButton color="primary" aria-label={$t('open')} items={getActionsForLibrary(library)} />
