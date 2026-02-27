@@ -102,7 +102,7 @@ export type Memory = {
   showAt: Date | null;
   hideAt: Date | null;
   type: MemoryType;
-  data: object;
+  data: Record<string, unknown>;
   ownerId: string;
   isSaved: boolean;
   assets: MapAsset[];

@@ -8,6 +8,7 @@ import { AuthService } from 'src/services/auth.service';
 import { UserMetadataItem } from 'src/types';
 import { sharedLinkStub } from 'test/fixtures/shared-link.stub';
 import { systemConfigStub } from 'test/fixtures/system-config.stub';
+import { userStub } from 'test/fixtures/user.stub';
 import { factory, newUuid } from 'test/small.factory';
 import { newTestService, ServiceMocks } from 'test/utils';
 
@@ -231,11 +232,13 @@ describe(AuthService.name, () => {
     it('should sign up the admin', async () => {
       mocks.user.getAdmin.mockResolvedValue(void 0);
       mocks.user.create.mockResolvedValue({
+        ...userStub.admin,
         ...dto,
         id: 'admin',
+        name: 'immich admin',
         createdAt: new Date('2021-01-01'),
         metadata: [] as UserMetadataItem[],
-      } as unknown as UserAdmin);
+      } as UserAdmin);
 
       await expect(sut.adminSignUp(dto)).resolves.toMatchObject({
         avatarColor: expect.any(String),
