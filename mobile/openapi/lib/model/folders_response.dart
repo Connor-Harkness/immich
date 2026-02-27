@@ -53,8 +53,8 @@ class FoldersResponse {
       final json = value.cast<String, dynamic>();
 
       return FoldersResponse(
-        enabled: mapValueOfType<bool>(json, r'enabled')!,
-        sidebarWeb: mapValueOfType<bool>(json, r'sidebarWeb')!,
+        enabled: mapValueOfType<bool>(json, r'enabled') ?? false,
+        sidebarWeb: mapValueOfType<bool>(json, r'sidebarWeb') ?? false,
       );
     }
     return null;
@@ -102,8 +102,6 @@ class FoldersResponse {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
-    'enabled',
-    'sidebarWeb',
   };
 }
 

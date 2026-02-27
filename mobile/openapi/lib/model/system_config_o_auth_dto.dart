@@ -48,10 +48,8 @@ class SystemConfigOAuthDto {
   /// Client secret
   String clientSecret;
 
-  /// Default storage quota
-  ///
   /// Minimum value: 0
-  int? defaultStorageQuota;
+  num? defaultStorageQuota;
 
   /// Enabled
   bool enabled;
@@ -62,7 +60,7 @@ class SystemConfigOAuthDto {
   /// Mobile override enabled
   bool mobileOverrideEnabled;
 
-  /// Mobile redirect URI
+  /// Mobile redirect URI (set to empty string to disable)
   String mobileRedirectUri;
 
   /// Profile signing algorithm
@@ -74,6 +72,7 @@ class SystemConfigOAuthDto {
   /// Scope
   String scope;
 
+  /// Signing algorithm
   String signingAlgorithm;
 
   /// Storage label claim
@@ -85,9 +84,9 @@ class SystemConfigOAuthDto {
   /// Timeout
   ///
   /// Minimum value: 1
+  /// Maximum value: 9007199254740991
   int timeout;
 
-  /// Token endpoint auth method
   OAuthTokenEndpointAuthMethod tokenEndpointAuthMethod;
 
   @override
@@ -177,7 +176,9 @@ class SystemConfigOAuthDto {
         buttonText: mapValueOfType<String>(json, r'buttonText')!,
         clientId: mapValueOfType<String>(json, r'clientId')!,
         clientSecret: mapValueOfType<String>(json, r'clientSecret')!,
-        defaultStorageQuota: mapValueOfType<int>(json, r'defaultStorageQuota'),
+        defaultStorageQuota: json[r'defaultStorageQuota'] == null
+            ? null
+            : num.parse('${json[r'defaultStorageQuota']}'),
         enabled: mapValueOfType<bool>(json, r'enabled')!,
         issuerUrl: mapValueOfType<String>(json, r'issuerUrl')!,
         mobileOverrideEnabled: mapValueOfType<bool>(json, r'mobileOverrideEnabled')!,

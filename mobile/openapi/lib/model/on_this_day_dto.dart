@@ -19,6 +19,7 @@ class OnThisDayDto {
   /// Year for on this day memory
   ///
   /// Minimum value: 1
+  /// Maximum value: 9999
   num year;
 
   @override

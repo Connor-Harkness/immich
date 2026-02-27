@@ -24,7 +24,12 @@ class UserAdminUpdateDto {
     this.storageLabel,
   });
 
-  /// Avatar color
+  ///
+  /// Please note: This property should have been non-nullable! Since the specification file
+  /// does not include a default value (using the "default:" property), however, the generated
+  /// source code must fall back to having a nullable type.
+  /// Consider adding a "default:" property in the specification file to hide this note.
+  ///
   UserAvatarColor? avatarColor;
 
   /// User email
@@ -63,12 +68,10 @@ class UserAdminUpdateDto {
   ///
   String? password;
 
-  /// PIN code
   String? pinCode;
 
-  /// Storage quota in bytes
-  ///
   /// Minimum value: 0
+  /// Maximum value: 9007199254740991
   int? quotaSizeInBytes;
 
   /// Require password change on next login
@@ -80,7 +83,6 @@ class UserAdminUpdateDto {
   ///
   bool? shouldChangePassword;
 
-  /// Storage label
   String? storageLabel;
 
   @override

@@ -20,15 +20,27 @@ class LibraryStatsResponseDto {
   });
 
   /// Number of photos
+  ///
+  /// Minimum value: -9007199254740991
+  /// Maximum value: 9007199254740991
   int photos;
 
   /// Total number of assets
+  ///
+  /// Minimum value: -9007199254740991
+  /// Maximum value: 9007199254740991
   int total;
 
   /// Storage usage in bytes
+  ///
+  /// Minimum value: -9007199254740991
+  /// Maximum value: 9007199254740991
   int usage;
 
   /// Number of videos
+  ///
+  /// Minimum value: -9007199254740991
+  /// Maximum value: 9007199254740991
   int videos;
 
   @override
@@ -67,10 +79,10 @@ class LibraryStatsResponseDto {
       final json = value.cast<String, dynamic>();
 
       return LibraryStatsResponseDto(
-        photos: mapValueOfType<int>(json, r'photos')!,
-        total: mapValueOfType<int>(json, r'total')!,
-        usage: mapValueOfType<int>(json, r'usage')!,
-        videos: mapValueOfType<int>(json, r'videos')!,
+        photos: mapValueOfType<int>(json, r'photos') ?? 0,
+        total: mapValueOfType<int>(json, r'total') ?? 0,
+        usage: mapValueOfType<int>(json, r'usage') ?? 0,
+        videos: mapValueOfType<int>(json, r'videos') ?? 0,
       );
     }
     return null;
@@ -118,10 +130,6 @@ class LibraryStatsResponseDto {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
-    'photos',
-    'total',
-    'usage',
-    'videos',
   };
 }
 

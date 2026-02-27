@@ -25,30 +25,46 @@ class AssetFaceResponseDto {
   });
 
   /// Bounding box X1 coordinate
+  ///
+  /// Minimum value: -9007199254740991
+  /// Maximum value: 9007199254740991
   int boundingBoxX1;
 
   /// Bounding box X2 coordinate
+  ///
+  /// Minimum value: -9007199254740991
+  /// Maximum value: 9007199254740991
   int boundingBoxX2;
 
   /// Bounding box Y1 coordinate
+  ///
+  /// Minimum value: -9007199254740991
+  /// Maximum value: 9007199254740991
   int boundingBoxY1;
 
   /// Bounding box Y2 coordinate
+  ///
+  /// Minimum value: -9007199254740991
+  /// Maximum value: 9007199254740991
   int boundingBoxY2;
 
   /// Face ID
   String id;
 
   /// Image height in pixels
+  ///
+  /// Minimum value: 0
+  /// Maximum value: 9007199254740991
   int imageHeight;
 
   /// Image width in pixels
+  ///
+  /// Minimum value: 0
+  /// Maximum value: 9007199254740991
   int imageWidth;
 
-  /// Person associated with face
-  PersonResponseDto? person;
+  PersonResponseDto person;
 
-  /// Face detection source type
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
   /// does not include a default value (using the "default:" property), however, the generated
@@ -79,7 +95,7 @@ class AssetFaceResponseDto {
     (id.hashCode) +
     (imageHeight.hashCode) +
     (imageWidth.hashCode) +
-    (person == null ? 0 : person!.hashCode) +
+    (person.hashCode) +
     (sourceType == null ? 0 : sourceType!.hashCode);
 
   @override
@@ -94,11 +110,7 @@ class AssetFaceResponseDto {
       json[r'id'] = this.id;
       json[r'imageHeight'] = this.imageHeight;
       json[r'imageWidth'] = this.imageWidth;
-    if (this.person != null) {
       json[r'person'] = this.person;
-    } else {
-    //  json[r'person'] = null;
-    }
     if (this.sourceType != null) {
       json[r'sourceType'] = this.sourceType;
     } else {
@@ -123,7 +135,7 @@ class AssetFaceResponseDto {
         id: mapValueOfType<String>(json, r'id')!,
         imageHeight: mapValueOfType<int>(json, r'imageHeight')!,
         imageWidth: mapValueOfType<int>(json, r'imageWidth')!,
-        person: PersonResponseDto.fromJson(json[r'person']),
+        person: PersonResponseDto.fromJson(json[r'person'])!,
         sourceType: SourceType.fromJson(json[r'sourceType']),
       );
     }

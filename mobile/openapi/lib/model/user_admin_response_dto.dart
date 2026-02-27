@@ -32,13 +32,11 @@ class UserAdminResponseDto {
     required this.updatedAt,
   });
 
-  /// Avatar color
   UserAvatarColor avatarColor;
 
   /// Creation date
   DateTime createdAt;
 
-  /// Deletion date
   DateTime? deletedAt;
 
   /// User email
@@ -50,8 +48,7 @@ class UserAdminResponseDto {
   /// Is admin user
   bool isAdmin;
 
-  /// User license
-  UserLicense? license;
+  UserLicense license;
 
   /// User name
   String name;
@@ -65,19 +62,19 @@ class UserAdminResponseDto {
   /// Profile image path
   String profileImagePath;
 
-  /// Storage quota in bytes
+  /// Minimum value: 0
+  /// Maximum value: 9007199254740991
   int? quotaSizeInBytes;
 
-  /// Storage usage in bytes
+  /// Minimum value: 0
+  /// Maximum value: 9007199254740991
   int? quotaUsageInBytes;
 
   /// Require password change on next login
   bool shouldChangePassword;
 
-  /// User status
   UserStatus status;
 
-  /// Storage label
   String? storageLabel;
 
   /// Last update date
@@ -112,7 +109,7 @@ class UserAdminResponseDto {
     (email.hashCode) +
     (id.hashCode) +
     (isAdmin.hashCode) +
-    (license == null ? 0 : license!.hashCode) +
+    (license.hashCode) +
     (name.hashCode) +
     (oauthId.hashCode) +
     (profileChangedAt.hashCode) +
@@ -130,23 +127,25 @@ class UserAdminResponseDto {
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
       json[r'avatarColor'] = this.avatarColor;
-      json[r'createdAt'] = this.createdAt.toUtc().toIso8601String();
+      json[r'createdAt'] = _isEpochMarker(r'/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/')
+        ? this.createdAt.millisecondsSinceEpoch
+        : this.createdAt.toUtc().toIso8601String();
     if (this.deletedAt != null) {
-      json[r'deletedAt'] = this.deletedAt!.toUtc().toIso8601String();
+      json[r'deletedAt'] = _isEpochMarker(r'/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/')
+        ? this.deletedAt!.millisecondsSinceEpoch
+        : this.deletedAt!.toUtc().toIso8601String();
     } else {
     //  json[r'deletedAt'] = null;
     }
       json[r'email'] = this.email;
       json[r'id'] = this.id;
       json[r'isAdmin'] = this.isAdmin;
-    if (this.license != null) {
       json[r'license'] = this.license;
-    } else {
-    //  json[r'license'] = null;
-    }
       json[r'name'] = this.name;
       json[r'oauthId'] = this.oauthId;
-      json[r'profileChangedAt'] = this.profileChangedAt.toUtc().toIso8601String();
+      json[r'profileChangedAt'] = _isEpochMarker(r'/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/')
+        ? this.profileChangedAt.millisecondsSinceEpoch
+        : this.profileChangedAt.toUtc().toIso8601String();
       json[r'profileImagePath'] = this.profileImagePath;
     if (this.quotaSizeInBytes != null) {
       json[r'quotaSizeInBytes'] = this.quotaSizeInBytes;
@@ -165,7 +164,9 @@ class UserAdminResponseDto {
     } else {
     //  json[r'storageLabel'] = null;
     }
-      json[r'updatedAt'] = this.updatedAt.toUtc().toIso8601String();
+      json[r'updatedAt'] = _isEpochMarker(r'/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/')
+        ? this.updatedAt.millisecondsSinceEpoch
+        : this.updatedAt.toUtc().toIso8601String();
     return json;
   }
 
@@ -179,22 +180,22 @@ class UserAdminResponseDto {
 
       return UserAdminResponseDto(
         avatarColor: UserAvatarColor.fromJson(json[r'avatarColor'])!,
-        createdAt: mapDateTime(json, r'createdAt', r'')!,
-        deletedAt: mapDateTime(json, r'deletedAt', r''),
+        createdAt: mapDateTime(json, r'createdAt', r'/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/')!,
+        deletedAt: mapDateTime(json, r'deletedAt', r'/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/'),
         email: mapValueOfType<String>(json, r'email')!,
         id: mapValueOfType<String>(json, r'id')!,
         isAdmin: mapValueOfType<bool>(json, r'isAdmin')!,
-        license: UserLicense.fromJson(json[r'license']),
+        license: UserLicense.fromJson(json[r'license'])!,
         name: mapValueOfType<String>(json, r'name')!,
         oauthId: mapValueOfType<String>(json, r'oauthId')!,
-        profileChangedAt: mapDateTime(json, r'profileChangedAt', r'')!,
+        profileChangedAt: mapDateTime(json, r'profileChangedAt', r'/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/')!,
         profileImagePath: mapValueOfType<String>(json, r'profileImagePath')!,
         quotaSizeInBytes: mapValueOfType<int>(json, r'quotaSizeInBytes'),
         quotaUsageInBytes: mapValueOfType<int>(json, r'quotaUsageInBytes'),
         shouldChangePassword: mapValueOfType<bool>(json, r'shouldChangePassword')!,
         status: UserStatus.fromJson(json[r'status'])!,
         storageLabel: mapValueOfType<String>(json, r'storageLabel'),
-        updatedAt: mapDateTime(json, r'updatedAt', r'')!,
+        updatedAt: mapDateTime(json, r'updatedAt', r'/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/')!,
       );
     }
     return null;

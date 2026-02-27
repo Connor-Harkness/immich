@@ -17,10 +17,8 @@ class VersionCheckStateResponseDto {
     required this.releaseVersion,
   });
 
-  /// Last check timestamp
   String? checkedAt;
 
-  /// Release version
   String? releaseVersion;
 
   @override

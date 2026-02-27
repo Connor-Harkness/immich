@@ -49,10 +49,8 @@ class SharedLinkResponseDto {
   /// Creation date
   DateTime createdAt;
 
-  /// Link description
   String? description;
 
-  /// Expiration date
   DateTime? expiresAt;
 
   /// Shared link ID
@@ -61,19 +59,16 @@ class SharedLinkResponseDto {
   /// Encryption key (base64url)
   String key;
 
-  /// Has password
   String? password;
 
   /// Show metadata
   bool showMetadata;
 
-  /// Custom URL slug
   String? slug;
 
   /// Access token
   String? token;
 
-  /// Shared link type
   SharedLinkType type;
 
   /// Owner user ID
@@ -129,14 +124,18 @@ class SharedLinkResponseDto {
       json[r'allowDownload'] = this.allowDownload;
       json[r'allowUpload'] = this.allowUpload;
       json[r'assets'] = this.assets;
-      json[r'createdAt'] = this.createdAt.toUtc().toIso8601String();
+      json[r'createdAt'] = _isEpochMarker(r'/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/')
+        ? this.createdAt.millisecondsSinceEpoch
+        : this.createdAt.toUtc().toIso8601String();
     if (this.description != null) {
       json[r'description'] = this.description;
     } else {
     //  json[r'description'] = null;
     }
     if (this.expiresAt != null) {
-      json[r'expiresAt'] = this.expiresAt!.toUtc().toIso8601String();
+      json[r'expiresAt'] = _isEpochMarker(r'/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/')
+        ? this.expiresAt!.millisecondsSinceEpoch
+        : this.expiresAt!.toUtc().toIso8601String();
     } else {
     //  json[r'expiresAt'] = null;
     }
@@ -176,9 +175,9 @@ class SharedLinkResponseDto {
         allowDownload: mapValueOfType<bool>(json, r'allowDownload')!,
         allowUpload: mapValueOfType<bool>(json, r'allowUpload')!,
         assets: AssetResponseDto.listFromJson(json[r'assets']),
-        createdAt: mapDateTime(json, r'createdAt', r'')!,
+        createdAt: mapDateTime(json, r'createdAt', r'/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/')!,
         description: mapValueOfType<String>(json, r'description'),
-        expiresAt: mapDateTime(json, r'expiresAt', r''),
+        expiresAt: mapDateTime(json, r'expiresAt', r'/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/'),
         id: mapValueOfType<String>(json, r'id')!,
         key: mapValueOfType<String>(json, r'key')!,
         password: mapValueOfType<String>(json, r'password'),

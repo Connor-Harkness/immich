@@ -13,15 +13,14 @@ part of openapi.api;
 class WorkflowFilterResponseDto {
   /// Returns a new [WorkflowFilterResponseDto] instance.
   WorkflowFilterResponseDto({
-    required this.filterConfig,
+    this.filterConfig = const {},
     required this.id,
     required this.order,
     required this.pluginFilterId,
     required this.workflowId,
   });
 
-  /// Filter configuration
-  Object? filterConfig;
+  Map<String, Object> filterConfig;
 
   /// Filter ID
   String id;
@@ -37,7 +36,7 @@ class WorkflowFilterResponseDto {
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is WorkflowFilterResponseDto &&
-    other.filterConfig == filterConfig &&
+    _deepEquality.equals(other.filterConfig, filterConfig) &&
     other.id == id &&
     other.order == order &&
     other.pluginFilterId == pluginFilterId &&
@@ -46,7 +45,7 @@ class WorkflowFilterResponseDto {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (filterConfig == null ? 0 : filterConfig!.hashCode) +
+    (filterConfig.hashCode) +
     (id.hashCode) +
     (order.hashCode) +
     (pluginFilterId.hashCode) +
@@ -57,11 +56,7 @@ class WorkflowFilterResponseDto {
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.filterConfig != null) {
       json[r'filterConfig'] = this.filterConfig;
-    } else {
-    //  json[r'filterConfig'] = null;
-    }
       json[r'id'] = this.id;
       json[r'order'] = this.order;
       json[r'pluginFilterId'] = this.pluginFilterId;
@@ -78,7 +73,7 @@ class WorkflowFilterResponseDto {
       final json = value.cast<String, dynamic>();
 
       return WorkflowFilterResponseDto(
-        filterConfig: mapValueOfType<Object>(json, r'filterConfig'),
+        filterConfig: mapCastOfType<String, Object>(json, r'filterConfig')!,
         id: mapValueOfType<String>(json, r'id')!,
         order: num.parse('${json[r'order']}'),
         pluginFilterId: mapValueOfType<String>(json, r'pluginFilterId')!,

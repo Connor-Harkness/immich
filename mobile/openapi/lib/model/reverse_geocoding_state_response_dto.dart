@@ -17,10 +17,8 @@ class ReverseGeocodingStateResponseDto {
     required this.lastUpdate,
   });
 
-  /// Last import file name
   String? lastImportFileName;
 
-  /// Last update timestamp
   String? lastUpdate;
 
   @override

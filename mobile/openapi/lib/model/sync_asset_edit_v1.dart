@@ -16,18 +16,26 @@ class SyncAssetEditV1 {
     required this.action,
     required this.assetId,
     required this.id,
-    required this.parameters,
+    this.parameters = const {},
     required this.sequence,
   });
 
-  AssetEditAction action;
+  /// Asset edit action
+  SyncAssetEditV1ActionEnum action;
 
+  /// Asset ID
   String assetId;
 
+  /// Edit ID
   String id;
 
-  Object parameters;
+  /// Edit parameters
+  Map<String, Object> parameters;
 
+  /// Edit sequence
+  ///
+  /// Minimum value: -9007199254740991
+  /// Maximum value: 9007199254740991
   int sequence;
 
   @override
@@ -35,7 +43,7 @@ class SyncAssetEditV1 {
     other.action == action &&
     other.assetId == assetId &&
     other.id == id &&
-    other.parameters == parameters &&
+    _deepEquality.equals(other.parameters, parameters) &&
     other.sequence == sequence;
 
   @override
@@ -69,10 +77,10 @@ class SyncAssetEditV1 {
       final json = value.cast<String, dynamic>();
 
       return SyncAssetEditV1(
-        action: AssetEditAction.fromJson(json[r'action'])!,
+        action: SyncAssetEditV1ActionEnum.fromJson(json[r'action'])!,
         assetId: mapValueOfType<String>(json, r'assetId')!,
         id: mapValueOfType<String>(json, r'id')!,
-        parameters: mapValueOfType<Object>(json, r'parameters')!,
+        parameters: mapCastOfType<String, Object>(json, r'parameters')!,
         sequence: mapValueOfType<int>(json, r'sequence')!,
       );
     }
@@ -128,4 +136,81 @@ class SyncAssetEditV1 {
     'sequence',
   };
 }
+
+/// Asset edit action
+class SyncAssetEditV1ActionEnum {
+  /// Instantiate a new enum with the provided [value].
+  const SyncAssetEditV1ActionEnum._(this.value);
+
+  /// The underlying value of this enum member.
+  final String value;
+
+  @override
+  String toString() => value;
+
+  String toJson() => value;
+
+  static const crop = SyncAssetEditV1ActionEnum._(r'crop');
+  static const rotate = SyncAssetEditV1ActionEnum._(r'rotate');
+  static const mirror = SyncAssetEditV1ActionEnum._(r'mirror');
+
+  /// List of all possible values in this [enum][SyncAssetEditV1ActionEnum].
+  static const values = <SyncAssetEditV1ActionEnum>[
+    crop,
+    rotate,
+    mirror,
+  ];
+
+  static SyncAssetEditV1ActionEnum? fromJson(dynamic value) => SyncAssetEditV1ActionEnumTypeTransformer().decode(value);
+
+  static List<SyncAssetEditV1ActionEnum> listFromJson(dynamic json, {bool growable = false,}) {
+    final result = <SyncAssetEditV1ActionEnum>[];
+    if (json is List && json.isNotEmpty) {
+      for (final row in json) {
+        final value = SyncAssetEditV1ActionEnum.fromJson(row);
+        if (value != null) {
+          result.add(value);
+        }
+      }
+    }
+    return result.toList(growable: growable);
+  }
+}
+
+/// Transformation class that can [encode] an instance of [SyncAssetEditV1ActionEnum] to String,
+/// and [decode] dynamic data back to [SyncAssetEditV1ActionEnum].
+class SyncAssetEditV1ActionEnumTypeTransformer {
+  factory SyncAssetEditV1ActionEnumTypeTransformer() => _instance ??= const SyncAssetEditV1ActionEnumTypeTransformer._();
+
+  const SyncAssetEditV1ActionEnumTypeTransformer._();
+
+  String encode(SyncAssetEditV1ActionEnum data) => data.value;
+
+  /// Decodes a [dynamic value][data] to a SyncAssetEditV1ActionEnum.
+  ///
+  /// If [allowNull] is true and the [dynamic value][data] cannot be decoded successfully,
+  /// then null is returned. However, if [allowNull] is false and the [dynamic value][data]
+  /// cannot be decoded successfully, then an [UnimplementedError] is thrown.
+  ///
+  /// The [allowNull] is very handy when an API changes and a new enum value is added or removed,
+  /// and users are still using an old app with the old code.
+  SyncAssetEditV1ActionEnum? decode(dynamic data, {bool allowNull = true}) {
+    if (data != null) {
+      switch (data) {
+        case r'crop': return SyncAssetEditV1ActionEnum.crop;
+        case r'rotate': return SyncAssetEditV1ActionEnum.rotate;
+        case r'mirror': return SyncAssetEditV1ActionEnum.mirror;
+        default:
+          if (!allowNull) {
+            throw ArgumentError('Unknown enum value to decode: $data');
+          }
+      }
+    }
+    return null;
+  }
+
+  /// Singleton [SyncAssetEditV1ActionEnumTypeTransformer] instance.
+  static SyncAssetEditV1ActionEnumTypeTransformer? _instance;
+}
+
 

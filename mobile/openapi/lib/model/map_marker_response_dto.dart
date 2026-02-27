@@ -21,10 +21,8 @@ class MapMarkerResponseDto {
     required this.state,
   });
 
-  /// City name
   String? city;
 
-  /// Country name
   String? country;
 
   /// Asset ID
@@ -36,7 +34,6 @@ class MapMarkerResponseDto {
   /// Longitude
   double lon;
 
-  /// State/Province name
   String? state;
 
   @override

@@ -46,7 +46,7 @@ class RatingsResponse {
       final json = value.cast<String, dynamic>();
 
       return RatingsResponse(
-        enabled: mapValueOfType<bool>(json, r'enabled')!,
+        enabled: mapValueOfType<bool>(json, r'enabled') ?? false,
       );
     }
     return null;
@@ -94,7 +94,6 @@ class RatingsResponse {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
-    'enabled',
   };
 }
 

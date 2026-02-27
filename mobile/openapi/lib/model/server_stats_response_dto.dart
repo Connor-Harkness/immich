@@ -22,20 +22,36 @@ class ServerStatsResponseDto {
   });
 
   /// Total number of photos
+  ///
+  /// Minimum value: -9007199254740991
+  /// Maximum value: 9007199254740991
   int photos;
 
   /// Total storage usage in bytes
+  ///
+  /// Minimum value: -9007199254740991
+  /// Maximum value: 9007199254740991
   int usage;
 
+  /// Array of usage for each user
   List<UsageByUserDto> usageByUser;
 
   /// Storage usage for photos in bytes
+  ///
+  /// Minimum value: -9007199254740991
+  /// Maximum value: 9007199254740991
   int usagePhotos;
 
   /// Storage usage for videos in bytes
+  ///
+  /// Minimum value: -9007199254740991
+  /// Maximum value: 9007199254740991
   int usageVideos;
 
   /// Total number of videos
+  ///
+  /// Minimum value: -9007199254740991
+  /// Maximum value: 9007199254740991
   int videos;
 
   @override
@@ -80,12 +96,12 @@ class ServerStatsResponseDto {
       final json = value.cast<String, dynamic>();
 
       return ServerStatsResponseDto(
-        photos: mapValueOfType<int>(json, r'photos')!,
-        usage: mapValueOfType<int>(json, r'usage')!,
+        photos: mapValueOfType<int>(json, r'photos') ?? 0,
+        usage: mapValueOfType<int>(json, r'usage') ?? 0,
         usageByUser: UsageByUserDto.listFromJson(json[r'usageByUser']),
-        usagePhotos: mapValueOfType<int>(json, r'usagePhotos')!,
-        usageVideos: mapValueOfType<int>(json, r'usageVideos')!,
-        videos: mapValueOfType<int>(json, r'videos')!,
+        usagePhotos: mapValueOfType<int>(json, r'usagePhotos') ?? 0,
+        usageVideos: mapValueOfType<int>(json, r'usageVideos') ?? 0,
+        videos: mapValueOfType<int>(json, r'videos') ?? 0,
       );
     }
     return null;
@@ -133,12 +149,6 @@ class ServerStatsResponseDto {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
-    'photos',
-    'usage',
-    'usageByUser',
-    'usagePhotos',
-    'usageVideos',
-    'videos',
   };
 }
 

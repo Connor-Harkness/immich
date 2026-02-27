@@ -46,7 +46,7 @@ class CastResponse {
       final json = value.cast<String, dynamic>();
 
       return CastResponse(
-        gCastEnabled: mapValueOfType<bool>(json, r'gCastEnabled')!,
+        gCastEnabled: mapValueOfType<bool>(json, r'gCastEnabled') ?? false,
       );
     }
     return null;
@@ -94,7 +94,6 @@ class CastResponse {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
-    'gCastEnabled',
   };
 }
 

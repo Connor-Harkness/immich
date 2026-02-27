@@ -25,7 +25,6 @@ class SessionCreateResponseDto {
     required this.updatedAt,
   });
 
-  /// App version
   String? appVersion;
 
   /// Creation date

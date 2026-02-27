@@ -13,11 +13,16 @@ part of openapi.api;
 class AlbumsResponse {
   /// Returns a new [AlbumsResponse] instance.
   AlbumsResponse({
-    this.defaultAssetOrder = AssetOrder.desc,
+    this.defaultAssetOrder,
   });
 
-  /// Default asset order for albums
-  AssetOrder defaultAssetOrder;
+  ///
+  /// Please note: This property should have been non-nullable! Since the specification file
+  /// does not include a default value (using the "default:" property), however, the generated
+  /// source code must fall back to having a nullable type.
+  /// Consider adding a "default:" property in the specification file to hide this note.
+  ///
+  AssetOrder? defaultAssetOrder;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is AlbumsResponse &&
@@ -26,14 +31,18 @@ class AlbumsResponse {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (defaultAssetOrder.hashCode);
+    (defaultAssetOrder == null ? 0 : defaultAssetOrder!.hashCode);
 
   @override
   String toString() => 'AlbumsResponse[defaultAssetOrder=$defaultAssetOrder]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
+    if (this.defaultAssetOrder != null) {
       json[r'defaultAssetOrder'] = this.defaultAssetOrder;
+    } else {
+    //  json[r'defaultAssetOrder'] = null;
+    }
     return json;
   }
 
@@ -46,7 +55,7 @@ class AlbumsResponse {
       final json = value.cast<String, dynamic>();
 
       return AlbumsResponse(
-        defaultAssetOrder: AssetOrder.fromJson(json[r'defaultAssetOrder'])!,
+        defaultAssetOrder: AssetOrder.fromJson(json[r'defaultAssetOrder']),
       );
     }
     return null;
@@ -94,7 +103,6 @@ class AlbumsResponse {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
-    'defaultAssetOrder',
   };
 }
 

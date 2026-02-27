@@ -264,6 +264,8 @@ class ApiClient {
           return AssetFaceWithoutPersonResponseDto.fromJson(value);
         case 'AssetFullSyncDto':
           return AssetFullSyncDto.fromJson(value);
+        case 'AssetIdErrorReason':
+          return AssetIdErrorReasonTypeTransformer().decode(value);
         case 'AssetIdsDto':
           return AssetIdsDto.fromJson(value);
         case 'AssetIdsResponseDto':
@@ -398,8 +400,6 @@ class ApiClient {
           return LibraryStatsResponseDto.fromJson(value);
         case 'LicenseKeyDto':
           return LicenseKeyDto.fromJson(value);
-        case 'LicenseResponseDto':
-          return LicenseResponseDto.fromJson(value);
         case 'LogLevel':
           return LogLevelTypeTransformer().decode(value);
         case 'LoginCredentialDto':
@@ -526,6 +526,14 @@ class ApiClient {
           return PluginContextTypeTypeTransformer().decode(value);
         case 'PluginFilterResponseDto':
           return PluginFilterResponseDto.fromJson(value);
+        case 'PluginJsonSchema':
+          return PluginJsonSchema.fromJson(value);
+        case 'PluginJsonSchemaProperty':
+          return PluginJsonSchemaProperty.fromJson(value);
+        case 'PluginJsonSchemaPropertyAdditionalProperties':
+          return PluginJsonSchemaPropertyAdditionalProperties.fromJson(value);
+        case 'PluginJsonSchemaType':
+          return PluginJsonSchemaTypeTypeTransformer().decode(value);
         case 'PluginResponseDto':
           return PluginResponseDto.fromJson(value);
         case 'PluginTriggerResponseDto':

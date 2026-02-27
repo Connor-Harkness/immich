@@ -18,6 +18,9 @@ class DownloadResponse {
   });
 
   /// Maximum archive size in bytes
+  ///
+  /// Minimum value: -9007199254740991
+  /// Maximum value: 9007199254740991
   int archiveSize;
 
   /// Whether to include embedded videos in downloads
@@ -54,7 +57,7 @@ class DownloadResponse {
 
       return DownloadResponse(
         archiveSize: mapValueOfType<int>(json, r'archiveSize')!,
-        includeEmbeddedVideos: mapValueOfType<bool>(json, r'includeEmbeddedVideos')!,
+        includeEmbeddedVideos: mapValueOfType<bool>(json, r'includeEmbeddedVideos') ?? false,
       );
     }
     return null;
@@ -103,7 +106,6 @@ class DownloadResponse {
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
     'archiveSize',
-    'includeEmbeddedVideos',
   };
 }
 

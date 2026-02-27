@@ -20,10 +20,8 @@ class PersonCreateDto {
     this.name,
   });
 
-  /// Person date of birth
   DateTime? birthDate;
 
-  /// Person color (hex)
   String? color;
 
   /// Mark as favorite
@@ -76,7 +74,9 @@ class PersonCreateDto {
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
     if (this.birthDate != null) {
-      json[r'birthDate'] = _dateFormatter.format(this.birthDate!.toUtc());
+      json[r'birthDate'] = _isEpochMarker(r'/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$/')
+        ? this.birthDate!.millisecondsSinceEpoch
+        : _dateFormatter.format(this.birthDate!.toUtc());
     } else {
     //  json[r'birthDate'] = null;
     }
@@ -112,7 +112,7 @@ class PersonCreateDto {
       final json = value.cast<String, dynamic>();
 
       return PersonCreateDto(
-        birthDate: mapDateTime(json, r'birthDate', r''),
+        birthDate: mapDateTime(json, r'birthDate', r'/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$/'),
         color: mapValueOfType<String>(json, r'color'),
         isFavorite: mapValueOfType<bool>(json, r'isFavorite'),
         isHidden: mapValueOfType<bool>(json, r'isHidden'),

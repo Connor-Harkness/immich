@@ -61,6 +61,9 @@ String parameterToString(dynamic value) {
   if (value is AssetEditAction) {
     return AssetEditActionTypeTransformer().encode(value).toString();
   }
+  if (value is AssetIdErrorReason) {
+    return AssetIdErrorReasonTypeTransformer().encode(value).toString();
+  }
   if (value is AssetJobName) {
     return AssetJobNameTypeTransformer().encode(value).toString();
   }
@@ -132,6 +135,9 @@ String parameterToString(dynamic value) {
   }
   if (value is PluginContextType) {
     return PluginContextTypeTypeTransformer().encode(value).toString();
+  }
+  if (value is PluginJsonSchemaType) {
+    return PluginJsonSchemaTypeTypeTransformer().encode(value).toString();
   }
   if (value is PluginTriggerType) {
     return PluginTriggerTypeTypeTransformer().encode(value).toString();

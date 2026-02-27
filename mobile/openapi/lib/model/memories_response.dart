@@ -18,6 +18,9 @@ class MemoriesResponse {
   });
 
   /// Memory duration in seconds
+  ///
+  /// Minimum value: -9007199254740991
+  /// Maximum value: 9007199254740991
   int duration;
 
   /// Whether memories are enabled
@@ -53,8 +56,8 @@ class MemoriesResponse {
       final json = value.cast<String, dynamic>();
 
       return MemoriesResponse(
-        duration: mapValueOfType<int>(json, r'duration')!,
-        enabled: mapValueOfType<bool>(json, r'enabled')!,
+        duration: mapValueOfType<int>(json, r'duration') ?? 5,
+        enabled: mapValueOfType<bool>(json, r'enabled') ?? true,
       );
     }
     return null;
@@ -102,8 +105,6 @@ class MemoriesResponse {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
-    'duration',
-    'enabled',
   };
 }
 

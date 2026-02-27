@@ -18,13 +18,10 @@ class MapReverseGeocodeResponseDto {
     required this.state,
   });
 
-  /// City name
   String? city;
 
-  /// Country name
   String? country;
 
-  /// State/Province name
   String? state;
 
   @override

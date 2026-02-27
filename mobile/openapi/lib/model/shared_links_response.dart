@@ -53,8 +53,8 @@ class SharedLinksResponse {
       final json = value.cast<String, dynamic>();
 
       return SharedLinksResponse(
-        enabled: mapValueOfType<bool>(json, r'enabled')!,
-        sidebarWeb: mapValueOfType<bool>(json, r'sidebarWeb')!,
+        enabled: mapValueOfType<bool>(json, r'enabled') ?? true,
+        sidebarWeb: mapValueOfType<bool>(json, r'sidebarWeb') ?? false,
       );
     }
     return null;
@@ -102,8 +102,6 @@ class SharedLinksResponse {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
-    'enabled',
-    'sidebarWeb',
   };
 }
 

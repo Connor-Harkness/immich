@@ -17,8 +17,10 @@ class DatabaseBackupDto {
     required this.filesize,
   });
 
+  /// Backup filename
   String filename;
 
+  /// Backup file size
   num filesize;
 
   @override
