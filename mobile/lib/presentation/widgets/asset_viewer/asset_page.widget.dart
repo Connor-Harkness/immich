@@ -300,7 +300,6 @@ class _AssetPageState extends ConsumerState<AssetPage> {
     required bool isCurrentPage,
     required bool showingDetails,
     required bool isPlayingMotionVideo,
-    required BoxDecoration backgroundDecoration,
   }) {
     final heroAttributes = isCurrentPage ? PhotoViewHeroAttributes(tag: '${asset.heroTag}_${widget.heroOffset}') : null;
 
@@ -312,7 +311,7 @@ class _AssetPageState extends ConsumerState<AssetPage> {
         imageProvider: getFullImageProvider(displayAsset, size: size),
         heroAttributes: heroAttributes,
         loadingBuilder: (context, progress, index) => const Center(child: ImmichLoadingIndicator()),
-        backgroundDecoration: backgroundDecoration,
+
         gaplessPlayback: true,
         filterQuality: FilterQuality.high,
         tightMode: true,
@@ -349,7 +348,6 @@ class _AssetPageState extends ConsumerState<AssetPage> {
       tightMode: true,
       onPageBuild: _onPageBuild,
       enablePanAlways: true,
-      backgroundDecoration: backgroundDecoration,
       child: NativeVideoViewer(
         key: _NativeVideoViewerKey(displayAsset.heroTag),
         asset: displayAsset,
@@ -406,55 +404,53 @@ class _AssetPageState extends ConsumerState<AssetPage> {
           return ref.watch(assetServiceProvider).getExif(a);
         }),
       ],
-      child: Stack(
-        children: [
-          Offstage(
-            child: SingleChildScrollView(
-              controller: _proxyScrollController,
-              physics: const SnapScrollPhysics(),
-              child: const SizedBox.shrink(),
-            ),
-          ),
-          SingleChildScrollView(
-            controller: _scrollController,
-            physics: const NeverScrollableScrollPhysics(),
-            child: Stack(
-              children: [
-                SizedBox(
-                  width: viewportWidth,
-                  height: viewportHeight,
-                  child: _buildPhotoView(
-                    displayAsset,
-                    asset,
-                    isCurrentPage: currentHeroTag == asset.heroTag,
-                    showingDetails: _showingDetails,
-                    isPlayingMotionVideo: isPlayingMotionVideo,
-                    backgroundDecoration: BoxDecoration(color: _showingDetails ? Colors.black : Colors.transparent),
-                  ),
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        physics: const NeverScrollableScrollPhysics(),
+        child: ColoredBox(
+          color: _showingDetails ? Colors.black : Colors.transparent,
+          child: Stack(
+            children: [
+              Offstage(
+                child: SingleChildScrollView(
+                  controller: _proxyScrollController,
+                  physics: const SnapScrollPhysics(),
+                  child: const SizedBox.shrink(),
                 ),
-                IgnorePointer(
-                  ignoring: !_showingDetails,
-                  child: Column(
-                    children: [
-                      SizedBox(height: detailsOffset),
-                      GestureDetector(
-                        onVerticalDragStart: _beginDrag,
-                        onVerticalDragUpdate: _updateDrag,
-                        onVerticalDragEnd: _endDrag,
-                        onVerticalDragCancel: _onDragCancel,
-                        child: AnimatedOpacity(
-                          opacity: _showingDetails ? 1.0 : 0.0,
-                          duration: Durations.short2,
-                          child: AssetDetails(minHeight: viewportHeight - snapTarget),
-                        ),
+              ),
+              SizedBox(
+                width: viewportWidth,
+                height: viewportHeight,
+                child: _buildPhotoView(
+                  displayAsset,
+                  asset,
+                  isCurrentPage: currentHeroTag == asset.heroTag,
+                  showingDetails: _showingDetails,
+                  isPlayingMotionVideo: isPlayingMotionVideo,
+                ),
+              ),
+              IgnorePointer(
+                ignoring: !_showingDetails,
+                child: Column(
+                  children: [
+                    SizedBox(height: detailsOffset),
+                    GestureDetector(
+                      onVerticalDragStart: _beginDrag,
+                      onVerticalDragUpdate: _updateDrag,
+                      onVerticalDragEnd: _endDrag,
+                      onVerticalDragCancel: _onDragCancel,
+                      child: AnimatedOpacity(
+                        opacity: _showingDetails ? 1.0 : 0.0,
+                        duration: Durations.short2,
+                        child: AssetDetails(minHeight: viewportHeight - snapTarget),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
