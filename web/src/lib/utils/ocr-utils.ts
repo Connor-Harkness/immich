@@ -55,6 +55,54 @@ export const calculateBoundingBoxMatrix = (points: Point[]): { matrix: number[];
   return { matrix, width, height };
 };
 
+const HORIZONTAL_PADDING = 16;
+const VERTICAL_PADDING = 8;
+const REFERENCE_FONT_SIZE = 100;
+const MIN_FONT_SIZE = 8;
+const MAX_FONT_SIZE = 96;
+const REFERENCE_FONT = `${REFERENCE_FONT_SIZE}px 'GoogleSans', sans-serif`;
+
+let sharedCanvasContext: CanvasRenderingContext2D | null = null;
+
+const getCanvasContext = (): CanvasRenderingContext2D | null => {
+  if (sharedCanvasContext !== null) {
+    return sharedCanvasContext;
+  }
+  if (typeof document === 'undefined') {
+    return null;
+  }
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  if (!context) {
+    return null;
+  }
+  sharedCanvasContext = context;
+  return sharedCanvasContext;
+};
+
+export const calculateFittedFontSize = (text: string, boxWidth: number, boxHeight: number): number => {
+  const availableWidth = boxWidth - HORIZONTAL_PADDING;
+  const availableHeight = boxHeight - VERTICAL_PADDING;
+
+  const context = getCanvasContext();
+  if (!context) {
+    return Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, (1.4 * availableWidth) / text.length));
+  }
+
+  // Unsupported in Safari iOS <16.6; falls back to default canvas font, giving less accurate but functional sizing
+  // eslint-disable-next-line tscompat/tscompat
+  context.font = REFERENCE_FONT;
+
+  const metrics = context.measureText(text);
+  const measuredWidth = metrics.width;
+  const measuredHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+
+  const scaleFromWidth = (availableWidth / measuredWidth) * REFERENCE_FONT_SIZE;
+  const scaleFromHeight = (availableHeight / measuredHeight) * REFERENCE_FONT_SIZE;
+
+  return Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, Math.min(scaleFromWidth, scaleFromHeight)));
+};
+
 export const getOcrBoundingBoxes = (ocrData: OcrBoundingBox[], metrics: ContentMetrics): OcrBox[] => {
   const boxes: OcrBox[] = [];
   for (const ocr of ocrData) {
@@ -75,6 +123,15 @@ export const getOcrBoundingBoxes = (ocrData: OcrBoundingBox[], metrics: ContentM
       confidence: ocr.textScore,
     });
   }
+
+  const rowThreshold = metrics.contentHeight * 0.02;
+  boxes.sort((a, b) => {
+    const yDifference = a.points[0].y - b.points[0].y;
+    if (Math.abs(yDifference) < rowThreshold) {
+      return a.points[0].x - b.points[0].x;
+    }
+    return yDifference;
+  });
 
   return boxes;
 };

@@ -15,7 +15,7 @@
   import { SlideshowLook, SlideshowState, slideshowLookCssMapping, slideshowStore } from '$lib/stores/slideshow.store';
   import { getAssetUrl, targetImageSize as getTargetImageSize, handlePromiseError } from '$lib/utils';
   import { canCopyImageToClipboard, copyImageToClipboard } from '$lib/utils/asset-utils';
-  import { type ContentMetrics, getContentMetrics } from '$lib/utils/container-utils';
+  import { type ContentMetrics, getNaturalSize, scaleToFit } from '$lib/utils/container-utils';
   import { handleError } from '$lib/utils/handle-error';
   import { getOcrBoundingBoxes } from '$lib/utils/ocr-utils';
   import { getBoundingBox } from '$lib/utils/people-utils';
@@ -74,12 +74,16 @@
       return { contentWidth: 0, contentHeight: 0, offsetX: 0, offsetY: 0 };
     }
 
-    const { contentWidth, contentHeight, offsetX, offsetY } = getContentMetrics(assetViewerManager.imgRef);
+    const natural = getNaturalSize(assetViewerManager.imgRef);
+    const client = { width: containerWidth, height: containerHeight };
+    const scaled = scaleToFit(natural, client);
+    const offsetX = (client.width - scaled.width) / 2;
+    const offsetY = (client.height - scaled.height) / 2;
     const { currentZoom, currentPositionX, currentPositionY } = assetViewerManager.zoomState;
 
     return {
-      contentWidth: contentWidth * currentZoom,
-      contentHeight: contentHeight * currentZoom,
+      contentWidth: scaled.width * currentZoom,
+      contentHeight: scaled.height * currentZoom,
       offsetX: offsetX * currentZoom + currentPositionX,
       offsetY: offsetY * currentZoom + currentPositionY,
     };
