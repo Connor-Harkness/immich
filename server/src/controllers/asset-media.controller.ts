@@ -7,14 +7,17 @@ import {
   Next,
   Param,
   ParseFilePipe,
+  Patch,
   Post,
   Put,
   Query,
   Req,
   Res,
+  UploadedFile,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiHeader, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { NextFunction, Request, Response } from 'express';
 import { Endpoint, HistoryBuilder } from 'src/decorators';
@@ -22,14 +25,18 @@ import {
   AssetBulkUploadCheckResponseDto,
   AssetMediaResponseDto,
   AssetMediaStatus,
+  AssetUploadChunkResponseDto,
+  AssetUploadSessionResponseDto,
   CheckExistingAssetsResponseDto,
 } from 'src/dtos/asset-media-response.dto';
 import {
   AssetBulkUploadCheckDto,
   AssetMediaCreateDto,
+  AssetMediaCreateSessionDto,
   AssetMediaOptionsDto,
   AssetMediaReplaceDto,
   AssetMediaSize,
+  AssetUploadChunkDto,
   CheckExistingAssetsDto,
   UploadFieldName,
 } from 'src/dtos/asset-media.dto';
@@ -230,5 +237,57 @@ export class AssetMediaController {
     @Body() dto: AssetBulkUploadCheckDto,
   ): Promise<AssetBulkUploadCheckResponseDto> {
     return this.service.bulkUploadCheck(auth, dto);
+  }
+
+  @Post('upload-session')
+  @Authenticated({ permission: Permission.AssetUpload, sharedLink: true })
+  @ApiBody({ description: 'Chunked upload session information', type: AssetMediaCreateSessionDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Upload session created',
+    type: AssetUploadSessionResponseDto,
+  })
+  @Endpoint({
+    summary: 'Create upload session',
+    description: 'Initiates a chunked upload session and returns an uploadId. Use PATCH /upload-session/{uploadId} to upload individual chunks.',
+    history: new HistoryBuilder().added('v1'),
+  })
+  createUploadSession(
+    @Auth() auth: AuthDto,
+    @Body() dto: AssetMediaCreateSessionDto,
+  ): Promise<AssetUploadSessionResponseDto> {
+    return this.service.createUploadSession(auth, dto);
+  }
+
+  @Patch('upload-session/:uploadId')
+  @Authenticated({ permission: Permission.AssetUpload, sharedLink: true })
+  @UseInterceptors(FileInterceptor('assetData'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Chunk data',
+    schema: {
+      type: 'object',
+      required: ['assetData', 'chunkIndex', 'totalChunks'],
+      properties: {
+        assetData: { type: 'string', format: 'binary', description: 'Chunk binary data' },
+        chunkIndex: { type: 'integer', description: 'Zero-based chunk index' },
+        totalChunks: { type: 'integer', description: 'Total number of chunks' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Chunk uploaded', type: AssetUploadChunkResponseDto })
+  @HttpCode(HttpStatus.OK)
+  @Endpoint({
+    summary: 'Upload asset chunk',
+    description: 'Uploads a single chunk of a chunked upload session. The last chunk triggers asset creation.',
+    history: new HistoryBuilder().added('v1'),
+  })
+  async uploadAssetChunk(
+    @Auth() auth: AuthDto,
+    @Param('uploadId') uploadId: string,
+    @Body() dto: AssetUploadChunkDto,
+    @UploadedFile(new ParseFilePipe({ fileIsRequired: true })) chunk: Express.Multer.File,
+  ): Promise<AssetUploadChunkResponseDto> {
+    return this.service.uploadAssetChunk(auth, uploadId, dto, chunk.buffer);
   }
 }

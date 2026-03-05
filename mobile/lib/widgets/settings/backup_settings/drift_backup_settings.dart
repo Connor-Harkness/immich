@@ -41,6 +41,12 @@ class DriftBackupSettings extends ConsumerWidget {
           ),
           const _BackupOnlyWhenChargingButton(),
           const _BackupDelaySlider(),
+          const Divider(),
+          SettingGroupTitle(
+            title: "upload_options".t(context: context),
+            icon: Icons.upload_rounded,
+          ),
+          const _ChunkSizeSlider(),
         ],
         const Divider(),
         SettingGroupTitle(
@@ -349,6 +355,100 @@ class _BackupDelaySliderState extends ConsumerState<_BackupDelaySlider> {
           min: 0.0,
           divisions: 3,
           label: formatBackupDelaySliderValue(currentValue),
+        ),
+      ],
+    );
+  }
+}
+
+class _ChunkSizeSlider extends ConsumerStatefulWidget {
+  const _ChunkSizeSlider();
+
+  @override
+  ConsumerState<_ChunkSizeSlider> createState() => _ChunkSizeSliderState();
+}
+
+class _ChunkSizeSliderState extends ConsumerState<_ChunkSizeSlider> {
+  late final Stream<int?> valueStream;
+  late final StreamSubscription<int?> subscription;
+  late int currentValue;
+
+  /// Chunk size values in MB. 0 means disabled (no chunking).
+  static const List<int> _chunkSizeValues = [0, 10, 25, 50, 100];
+
+  static int chunkSizeMBToSliderIndex(int mb) {
+    final index = _chunkSizeValues.indexOf(mb);
+    return index < 0 ? 0 : index;
+  }
+
+  static int sliderIndexToChunkSizeMB(int index) {
+    if (index < 0 || index >= _chunkSizeValues.length) return 0;
+    return _chunkSizeValues[index];
+  }
+
+  static String formatChunkSize(int index) {
+    final mb = sliderIndexToChunkSizeMB(index);
+    if (mb == 0) return 'upload_chunk_size_disabled'.tr();
+    return '$mb MB';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final initialValue =
+        Store.tryGet(AppSettingsEnum.uploadChunkSize.storeKey) ?? AppSettingsEnum.uploadChunkSize.defaultValue;
+    currentValue = chunkSizeMBToSliderIndex(initialValue);
+
+    valueStream = Store.watch(AppSettingsEnum.uploadChunkSize.storeKey).asBroadcastStream();
+    subscription = valueStream.listen((value) {
+      if (mounted && value != null) {
+        setState(() {
+          currentValue = chunkSizeMBToSliderIndex(value);
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    subscription.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 24.0, top: 8.0),
+          child: Text(
+            'upload_chunk_size_label'.tr(namedArgs: {'size': formatChunkSize(currentValue)}),
+            style: context.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 24.0, bottom: 4.0),
+          child: Text(
+            'upload_chunk_size_description'.tr(),
+            style: context.textTheme.bodySmall,
+          ),
+        ),
+        Slider(
+          value: currentValue.toDouble(),
+          onChanged: (double v) {
+            setState(() {
+              currentValue = v.toInt();
+            });
+          },
+          onChangeEnd: (double v) async {
+            final mb = sliderIndexToChunkSizeMB(v.toInt());
+            await ref.read(appSettingsServiceProvider).setSetting(AppSettingsEnum.uploadChunkSize, mb);
+          },
+          max: (_chunkSizeValues.length - 1).toDouble(),
+          min: 0.0,
+          divisions: _chunkSizeValues.length - 1,
+          label: formatChunkSize(currentValue),
         ),
       ],
     );

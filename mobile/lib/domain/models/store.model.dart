@@ -94,7 +94,10 @@ enum StoreKey<T> {
   cleanupCutoffDaysAgo<int>._(1011),
   cleanupDefaultsInitialized<bool>._(1012),
 
-  syncMigrationStatus<String>._(1013);
+  syncMigrationStatus<String>._(1013),
+
+  // Chunked upload settings
+  uploadChunkSize<int>._(1014);
 
   const StoreKey._(this.id);
   final int id;

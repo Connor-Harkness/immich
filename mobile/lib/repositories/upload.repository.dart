@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:background_downloader/background_downloader.dart';
 import 'package:cancellation_token_http/http.dart';
@@ -103,6 +104,46 @@ class UploadRepository {
     required CancellationToken cancelToken,
     required void Function(int bytes, int totalBytes) onProgress,
     required String logContext,
+    int chunkSizeMB = 0,
+  }) async {
+    final fileSize = file.lengthSync();
+    final chunkSizeBytes = chunkSizeMB > 0 ? chunkSizeMB * 1024 * 1024 : 0;
+
+    if (chunkSizeBytes > 0 && fileSize > chunkSizeBytes) {
+      return _uploadFileInChunks(
+        file: file,
+        originalFileName: originalFileName,
+        headers: headers,
+        fields: fields,
+        httpClient: httpClient,
+        cancelToken: cancelToken,
+        onProgress: onProgress,
+        logContext: logContext,
+        chunkSizeBytes: chunkSizeBytes,
+      );
+    }
+
+    return _uploadFileSingle(
+      file: file,
+      originalFileName: originalFileName,
+      headers: headers,
+      fields: fields,
+      httpClient: httpClient,
+      cancelToken: cancelToken,
+      onProgress: onProgress,
+      logContext: logContext,
+    );
+  }
+
+  Future<UploadResult> _uploadFileSingle({
+    required File file,
+    required String originalFileName,
+    required Map<String, String> headers,
+    required Map<String, String> fields,
+    required Client httpClient,
+    required CancellationToken cancelToken,
+    required void Function(int bytes, int totalBytes) onProgress,
+    required String logContext,
   }) async {
     final String savedEndpoint = Store.get(StoreKey.serverEndpoint);
 
@@ -150,6 +191,122 @@ class UploadRepository {
       return UploadResult.cancelled();
     } catch (error, stackTrace) {
       logger.warning("Error uploading $logContext: ${error.toString()}: $stackTrace");
+      return UploadResult.error(errorMessage: error.toString());
+    }
+  }
+
+  Future<UploadResult> _uploadFileInChunks({
+    required File file,
+    required String originalFileName,
+    required Map<String, String> headers,
+    required Map<String, String> fields,
+    required Client httpClient,
+    required CancellationToken cancelToken,
+    required void Function(int bytes, int totalBytes) onProgress,
+    required String logContext,
+    required int chunkSizeBytes,
+  }) async {
+    final String savedEndpoint = Store.get(StoreKey.serverEndpoint);
+    final fileSize = file.lengthSync();
+    final totalChunks = (fileSize / chunkSizeBytes).ceil();
+
+    try {
+      // Step 1: Create upload session
+      final sessionRequest = Request('POST', Uri.parse('$savedEndpoint/assets/upload-session'));
+      sessionRequest.headers.addAll(headers);
+      sessionRequest.headers['Content-Type'] = 'application/json';
+      final sessionFields = Map<String, dynamic>.from(fields);
+      sessionFields['totalChunks'] = totalChunks;
+      sessionFields['filename'] = originalFileName;
+      sessionRequest.body = jsonEncode(sessionFields);
+
+      final sessionResponse = await httpClient.send(sessionRequest, cancellationToken: cancelToken);
+      final sessionBody = await sessionResponse.stream.bytesToString();
+
+      if (sessionResponse.statusCode != 201) {
+        String? errorMessage;
+        try {
+          final error = jsonDecode(sessionBody);
+          errorMessage = error['message'] ?? error['error'];
+        } catch (_) {
+          errorMessage = sessionBody.isNotEmpty ? sessionBody : 'Failed to create upload session';
+        }
+        return UploadResult.error(statusCode: sessionResponse.statusCode, errorMessage: errorMessage);
+      }
+
+      final sessionData = jsonDecode(sessionBody);
+      final String uploadId = sessionData['uploadId'] as String;
+
+      // Step 2: Upload chunks
+      final raf = await file.open(mode: FileMode.read);
+      try {
+        int bytesUploaded = 0;
+
+        for (int chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+          if (cancelToken.isCancelled) {
+            return UploadResult.cancelled();
+          }
+
+          final chunkStart = chunkIndex * chunkSizeBytes;
+          final chunkEnd = (chunkStart + chunkSizeBytes < fileSize) ? chunkStart + chunkSizeBytes : fileSize;
+          final actualChunkSize = chunkEnd - chunkStart;
+
+          final Uint8List chunkData = Uint8List(actualChunkSize);
+          await raf.readInto(chunkData, 0, actualChunkSize);
+
+          final chunkRequest = MultipartRequest(
+            'PATCH',
+            Uri.parse('$savedEndpoint/assets/upload-session/$uploadId'),
+          );
+          chunkRequest.headers.addAll(headers);
+          chunkRequest.fields['chunkIndex'] = chunkIndex.toString();
+          chunkRequest.fields['totalChunks'] = totalChunks.toString();
+          chunkRequest.files.add(MultipartFile.fromBytes(
+            'assetData',
+            chunkData,
+            filename: 'chunk-$chunkIndex',
+          ));
+
+          final chunkResponse = await httpClient.send(chunkRequest, cancellationToken: cancelToken);
+          final chunkBody = await chunkResponse.stream.bytesToString();
+
+          if (chunkResponse.statusCode != 200 && chunkResponse.statusCode != 201) {
+            String? errorMessage;
+            try {
+              final error = jsonDecode(chunkBody);
+              errorMessage = error['message'] ?? error['error'];
+            } catch (_) {
+              errorMessage = chunkBody.isNotEmpty ? chunkBody : 'Chunk upload failed';
+            }
+            return UploadResult.error(statusCode: chunkResponse.statusCode, errorMessage: errorMessage);
+          }
+
+          bytesUploaded += actualChunkSize;
+          onProgress(bytesUploaded, fileSize);
+
+          // Check if this was the last chunk
+          if (chunkIndex == totalChunks - 1) {
+            try {
+              final responseBody = jsonDecode(chunkBody);
+              final status = responseBody['status'] as String?;
+              if (status == 'complete' || status == 'duplicate') {
+                return UploadResult.success(remoteAssetId: responseBody['id'] as String);
+              }
+            } catch (e) {
+              return UploadResult.error(errorMessage: 'Failed to parse final chunk response');
+            }
+          }
+        }
+
+        return UploadResult.error(errorMessage: 'Chunked upload completed but no asset ID received');
+      } finally {
+        await raf.close();
+      }
+    } on CancelledException {
+      logger.warning("Chunked upload $logContext was cancelled");
+      return UploadResult.cancelled();
+    } catch (error, stackTrace) {
+      logger.warning("Error during chunked upload $logContext: ${error.toString()}: $stackTrace");
       return UploadResult.error(errorMessage: error.toString());
     }
   }
