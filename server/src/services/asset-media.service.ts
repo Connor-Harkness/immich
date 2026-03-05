@@ -474,18 +474,20 @@ export class AssetMediaService extends BaseService {
     const writeStream = createWriteStream(outputPath);
     let totalSize = 0;
 
+    const writeChunk = (buffer: Buffer) =>
+      new Promise<void>((resolve, reject) => writeStream.write(buffer, (err) => (err ? reject(err) : resolve())));
+    const closeStream = () => new Promise<void>((resolve, reject) => writeStream.end((err?: Error | null) => (err ? reject(err) : resolve())));
+
     try {
       for (let i = 0; i < totalChunks; i++) {
         const chunkPath = join(sessionDir, `chunk-${String(i).padStart(6, '0')}`);
         const chunkBuffer = await fsReadFile(chunkPath);
         hash.update(chunkBuffer);
         totalSize += chunkBuffer.length;
-        await new Promise<void>((resolve, reject) => {
-          writeStream.write(chunkBuffer, (err) => (err ? reject(err) : resolve()));
-        });
+        await writeChunk(chunkBuffer);
       }
     } finally {
-      await new Promise<void>((resolve, reject) => writeStream.end((err: Error | null | undefined) => (err ? reject(err) : resolve())));
+      await closeStream();
     }
 
     const uuid = this.cryptoRepository.randomUUID();

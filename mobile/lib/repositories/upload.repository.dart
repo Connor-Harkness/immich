@@ -217,7 +217,8 @@ class UploadRepository {
       sessionRequest.headers['Content-Type'] = 'application/json';
       final sessionFields = Map<String, dynamic>.from(fields);
       sessionFields['totalChunks'] = totalChunks;
-      sessionFields['filename'] = originalFileName;
+      // Only set filename if not already provided in fields
+      sessionFields.putIfAbsent('filename', () => originalFileName);
       sessionRequest.body = jsonEncode(sessionFields);
 
       final sessionResponse = await httpClient.send(sessionRequest, cancellationToken: cancelToken);
@@ -252,7 +253,14 @@ class UploadRepository {
           final actualChunkSize = chunkEnd - chunkStart;
 
           final Uint8List chunkData = Uint8List(actualChunkSize);
-          await raf.readInto(chunkData, 0, actualChunkSize);
+          int totalBytesRead = 0;
+          while (totalBytesRead < actualChunkSize) {
+            final bytesRead = await raf.readInto(chunkData, totalBytesRead, actualChunkSize);
+            if (bytesRead == 0) {
+              break; // EOF
+            }
+            totalBytesRead += bytesRead;
+          }
 
           final chunkRequest = MultipartRequest(
             'PATCH',
