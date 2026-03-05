@@ -332,6 +332,10 @@ export class StorageCore {
     return join(this.getNestedFolder(folder, ownerId, filename), filename);
   }
 
+  static getChunkSessionFolder(userId: string, uploadId: string): string {
+    return join(StorageCore.getFolderLocation(StorageFolder.Upload, userId), 'chunks', uploadId);
+  }
+
   static getTempPathInDir(dir: string): string {
     return join(dir, `${randomUUID()}.tmp`);
   }

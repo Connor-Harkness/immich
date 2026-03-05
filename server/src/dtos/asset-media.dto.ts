@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { plainToInstance, Transform, Type } from 'class-transformer';
-import { ArrayNotEmpty, IsArray, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
+import { ArrayNotEmpty, IsArray, IsInt, IsNotEmpty, IsString, Min, ValidateNested } from 'class-validator';
 import { AssetMetadataUpsertItemDto } from 'src/dtos/asset.dto';
 import { AssetVisibility } from 'src/enum';
 import { Optional, ValidateBoolean, ValidateDate, ValidateEnum, ValidateUUID } from 'src/validation';
@@ -125,4 +125,26 @@ export class CheckExistingAssetsDto {
   @ApiProperty({ description: 'Device ID' })
   @IsNotEmpty()
   deviceId!: string;
+}
+
+export class AssetMediaCreateSessionDto extends AssetMediaCreateDto {
+  @ApiProperty({ description: 'Total number of chunks the file will be split into', minimum: 1 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  totalChunks!: number;
+}
+
+export class AssetUploadChunkDto {
+  @ApiProperty({ description: 'Zero-based index of this chunk', minimum: 0 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  chunkIndex!: number;
+
+  @ApiProperty({ description: 'Total number of chunks for this upload', minimum: 1 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  totalChunks!: number;
 }

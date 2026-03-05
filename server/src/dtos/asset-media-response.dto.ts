@@ -45,3 +45,23 @@ export class CheckExistingAssetsResponseDto {
   @ApiProperty({ description: 'Existing asset IDs' })
   existingIds!: string[];
 }
+
+export enum AssetUploadChunkStatus {
+  PARTIAL = 'partial',
+  COMPLETE = 'complete',
+  DUPLICATE = 'duplicate',
+}
+
+export class AssetUploadSessionResponseDto {
+  @ApiProperty({ description: 'Upload session ID' })
+  uploadId!: string;
+}
+
+export class AssetUploadChunkResponseDto {
+  @ApiProperty({ description: 'Upload chunk status', enum: AssetUploadChunkStatus })
+  status!: AssetUploadChunkStatus;
+  @ApiPropertyOptional({ description: 'Asset ID when upload is complete or duplicate' })
+  id?: string;
+  @ApiPropertyOptional({ description: 'Number of chunks received so far' })
+  receivedChunks?: number;
+}

@@ -1,5 +1,8 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { extname } from 'node:path';
+import { createHash } from 'node:crypto';
+import { createWriteStream } from 'node:fs';
+import { readFile as fsReadFile } from 'node:fs/promises';
+import { extname, join } from 'node:path';
 import sanitize from 'sanitize-filename';
 import { StorageCore } from 'src/cores/storage.core';
 import { Asset } from 'src/database';
@@ -9,14 +12,19 @@ import {
   AssetMediaStatus,
   AssetRejectReason,
   AssetUploadAction,
+  AssetUploadChunkResponseDto,
+  AssetUploadChunkStatus,
+  AssetUploadSessionResponseDto,
   CheckExistingAssetsResponseDto,
 } from 'src/dtos/asset-media-response.dto';
 import {
   AssetBulkUploadCheckDto,
   AssetMediaCreateDto,
+  AssetMediaCreateSessionDto,
   AssetMediaOptionsDto,
   AssetMediaReplaceDto,
   AssetMediaSize,
+  AssetUploadChunkDto,
   CheckExistingAssetsDto,
   UploadFieldName,
 } from 'src/dtos/asset-media.dto';
@@ -319,6 +327,177 @@ export class AssetMediaService extends BaseService {
           action: AssetUploadAction.ACCEPT,
         };
       }),
+    };
+  }
+
+  async createUploadSession(auth: AuthDto, dto: AssetMediaCreateSessionDto): Promise<AssetUploadSessionResponseDto> {
+    requireUploadAccess(auth);
+
+    const uploadId = this.cryptoRepository.randomUUID();
+    const sessionDir = StorageCore.getChunkSessionFolder(auth.user.id, uploadId);
+    this.storageRepository.mkdirSync(sessionDir);
+
+    const sessionData = { uploadId, userId: auth.user.id, dto, totalChunks: dto.totalChunks };
+    await this.storageRepository.createOrOverwriteFile(
+      join(sessionDir, 'session.json'),
+      Buffer.from(JSON.stringify(sessionData)),
+    );
+
+    return { uploadId };
+  }
+
+  async uploadAssetChunk(
+    auth: AuthDto,
+    uploadId: string,
+    chunkDto: AssetUploadChunkDto,
+    chunkBuffer: Buffer,
+  ): Promise<AssetUploadChunkResponseDto> {
+    requireUploadAccess(auth);
+
+    const sessionDir = StorageCore.getChunkSessionFolder(auth.user.id, uploadId);
+    const sessionFile = join(sessionDir, 'session.json');
+
+    const sessionExists = await this.storageRepository.checkFileExists(sessionFile);
+    if (!sessionExists) {
+      throw new NotFoundException(`Upload session '${uploadId}' not found`);
+    }
+
+    const sessionData: { dto: AssetMediaCreateSessionDto; totalChunks: number } = JSON.parse(
+      await this.storageRepository.readTextFile(sessionFile),
+    );
+
+    const { chunkIndex, totalChunks } = chunkDto;
+
+    if (totalChunks !== sessionData.totalChunks) {
+      throw new BadRequestException(`totalChunks mismatch: expected ${sessionData.totalChunks}, got ${totalChunks}`);
+    }
+
+    if (chunkIndex < 0 || chunkIndex >= totalChunks) {
+      throw new BadRequestException(`chunkIndex ${chunkIndex} out of range [0, ${totalChunks - 1}]`);
+    }
+
+    // Write chunk to session directory
+    const chunkFilename = `chunk-${String(chunkIndex).padStart(6, '0')}`;
+    await this.storageRepository.createOrOverwriteFile(join(sessionDir, chunkFilename), chunkBuffer);
+
+    // Check if all chunks have been received
+    const receivedChunks = await this._countReceivedChunks(sessionDir, totalChunks);
+
+    if (receivedChunks < totalChunks) {
+      return { status: AssetUploadChunkStatus.PARTIAL, receivedChunks };
+    }
+
+    // All chunks received - assemble and create asset
+    const dto = sessionData.dto as AssetMediaCreateDto;
+    const extension = extname(dto.filename || 'upload');
+    const assembledPath = join(sessionDir, `assembled${extension}`);
+
+    let assembledFile: UploadFile | undefined;
+    try {
+      assembledFile = await this._assembleChunks(sessionDir, totalChunks, assembledPath, dto.filename || 'upload');
+
+      // Move assembled file to permanent upload location
+      const uploadFolder = StorageCore.getNestedFolder(StorageFolder.Upload, auth.user.id, assembledFile.uuid);
+      this.storageRepository.mkdirSync(uploadFolder);
+      const permanentPath = join(uploadFolder, `${assembledFile.uuid}${extension}`);
+      await this.storageRepository.rename(assembledPath, permanentPath);
+
+      // Update file reference to permanent path
+      assembledFile = { ...assembledFile, originalPath: permanentPath };
+
+      if (dto.livePhotoVideoId) {
+        await onBeforeLink(
+          { asset: this.assetRepository, event: this.eventRepository },
+          { userId: auth.user.id, livePhotoVideoId: dto.livePhotoVideoId },
+        );
+      }
+
+      this.requireQuota(auth, assembledFile.size);
+
+      const asset = await this.create(auth.user.id, dto, assembledFile);
+      await this.userRepository.updateUsage(auth.user.id, assembledFile.size);
+
+      // Schedule session directory cleanup
+      await this.jobRepository.queue({
+        name: JobName.FileDelete,
+        data: {
+          files: [
+            ...Array.from({ length: totalChunks }, (_, i) => join(sessionDir, `chunk-${String(i).padStart(6, '0')}`)),
+            sessionFile,
+          ],
+        },
+      });
+
+      return { status: AssetUploadChunkStatus.COMPLETE, id: asset.id };
+    } catch (error: any) {
+      if (assembledFile && isAssetChecksumConstraint(error)) {
+        const duplicateId = await this.assetRepository.getUploadAssetIdByChecksum(auth.user.id, assembledFile.checksum);
+        if (duplicateId) {
+          await this.jobRepository.queue({
+            name: JobName.FileDelete,
+            data: {
+              files: [
+                ...Array.from({ length: totalChunks }, (_, i) =>
+                  join(sessionDir, `chunk-${String(i).padStart(6, '0')}`),
+                ),
+                sessionFile,
+                assembledFile.originalPath,
+              ],
+            },
+          });
+          return { status: AssetUploadChunkStatus.DUPLICATE, id: duplicateId };
+        }
+      }
+      this.logger.error(`Error assembling chunked upload ${uploadId}: ${error}`, error?.stack);
+      throw error;
+    }
+  }
+
+  private async _countReceivedChunks(sessionDir: string, totalChunks: number): Promise<number> {
+    let count = 0;
+    for (let i = 0; i < totalChunks; i++) {
+      const chunkPath = join(sessionDir, `chunk-${String(i).padStart(6, '0')}`);
+      if (await this.storageRepository.checkFileExists(chunkPath)) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  private async _assembleChunks(
+    sessionDir: string,
+    totalChunks: number,
+    outputPath: string,
+    originalName: string,
+  ): Promise<UploadFile> {
+    const hash = createHash('sha1');
+    const writeStream = createWriteStream(outputPath);
+    let totalSize = 0;
+
+    const writeChunk = (buffer: Buffer) =>
+      new Promise<void>((resolve, reject) => writeStream.write(buffer, (err) => (err ? reject(err) : resolve())));
+    const closeStream = () => new Promise<void>((resolve, reject) => writeStream.end((err?: Error | null) => (err ? reject(err) : resolve())));
+
+    try {
+      for (let i = 0; i < totalChunks; i++) {
+        const chunkPath = join(sessionDir, `chunk-${String(i).padStart(6, '0')}`);
+        const chunkBuffer = await fsReadFile(chunkPath);
+        hash.update(chunkBuffer);
+        totalSize += chunkBuffer.length;
+        await writeChunk(chunkBuffer);
+      }
+    } finally {
+      await closeStream();
+    }
+
+    const uuid = this.cryptoRepository.randomUUID();
+
+    return {
+      uuid,
+      checksum: hash.digest(),
+      originalPath: outputPath,
+      originalName,
+      size: totalSize,
     };
   }
 

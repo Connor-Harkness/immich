@@ -368,6 +368,7 @@ class ForegroundUploadService {
           onProgress: (bytes, totalBytes) =>
               callbacks.onProgress?.call(asset.localId!, livePhotoTitle, bytes, totalBytes),
           logContext: 'livePhotoVideo[${asset.localId}]',
+          chunkSizeMB: _appSettingsService.getSetting(AppSettingsEnum.uploadChunkSize),
         );
 
         if (livePhotoResult.isSuccess && livePhotoResult.remoteAssetId != null) {
@@ -405,6 +406,7 @@ class ForegroundUploadService {
         onProgress: (bytes, totalBytes) =>
             callbacks.onProgress?.call(asset.localId!, originalFileName, bytes, totalBytes),
         logContext: 'asset[${asset.localId}]',
+        chunkSizeMB: _appSettingsService.getSetting(AppSettingsEnum.uploadChunkSize),
       );
 
       if (result.isSuccess && result.remoteAssetId != null) {
@@ -473,6 +475,7 @@ class ForegroundUploadService {
         cancelToken: cancelToken,
         onProgress: onProgress ?? (_, __) {},
         logContext: 'shareIntent[$deviceAssetId]',
+        chunkSizeMB: _appSettingsService.getSetting(AppSettingsEnum.uploadChunkSize),
       );
     } catch (e) {
       return UploadResult.error(errorMessage: e.toString());
